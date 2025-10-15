@@ -1,7 +1,10 @@
 from fastapi import FastAPI, Depends, HTTPException
 from sqlalchemy.orm import Session
-from . import models, schemas, crud
-from .database import engine, Base, get_db
+
+from app.database import engine, Base
+from app.model import models
+from app.admin.router import router as admin_router
+from app.user.router import router as user_router
 
 app = FastAPI()
 
@@ -11,16 +14,7 @@ def read_root():
 
 Base.metadata.create_all(bind=engine)
 
-# Admins
+# Routers
 
-@app.post("/admins/", response_model=schemas.Admin)
-def register_admin(admin: schemas.AdminCreate, db: Session = Depends(get_db)):
-    if crud.get_admin_by_email(db, admin.email):
-        raise HTTPException(status_code=400, detail="Email already registered")
-    if crud.get_admin_by_cpf(db, admin.cpf):
-        raise HTTPException(status_code=400, detail="CPF already registered")
-    return crud.create_admin(db, admin)
-
-@app.get("/admins/", response_model=list[schemas.Admin])
-def list_admins(db: Session = Depends(get_db)):
-    return crud.get_admins(db)
+app.include_router(admin_router)
+app.include_router(user_router)
