@@ -1,4 +1,5 @@
 from pydantic import BaseModel
+from app.competencia.schemas import Competencia
 
 class UserBase(BaseModel):
     nome: str
@@ -13,6 +14,7 @@ class UserCreate(UserBase):
 
 class User(UserBase):
     id: int
+    competencias: list[Competencia] = []
 
     class Config:
         orm_mode = True

@@ -1,22 +1,6 @@
 version: "3.9"
 
 services:
-  backend:
-    build: ./backend
-    container_name: fastapi-backend
-    restart: always
-    ports:
-      - "8000:8000"
-    environment:
-      POSTGRES_DB: mydb
-      POSTGRES_USER: myuser
-      POSTGRES_PASSWORD: mypassword
-      DB_HOST: db
-      DB_PORT: 5432
-    depends_on:
-      db:
-        condition: service_healthy
-
   db:
     image: postgres:15
     container_name: fastapi-db
@@ -30,7 +14,7 @@ services:
     ports:
       - "5432:5432"
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U myuser -d mydb"]
+      test: ["CMD-SHELL", "pg_isready -U myuser -d mydb -h 127.0.0.1 || pg_isready -U myuser -d mydb -h db"]
       interval: 5s
       timeout: 5s
       retries: 5
@@ -49,6 +33,51 @@ services:
       - pgadmin_data:/var/lib/pgadmin  
     depends_on:
       - db
+
+  backend:
+    build: ./backend
+    container_name: fastapi-backend
+    restart: always
+    ports:
+      - "8000:8000"
+    environment:
+      POSTGRES_DB: mydb
+      POSTGRES_USER: myuser
+      POSTGRES_PASSWORD: mypassword
+      DB_HOST: db
+      DB_PORT: 5432
+    depends_on:
+      db:
+        condition: service_healthy
+
+  tests:
+    build: ./backend
+    container_name: fastapi-tests
+    command: >
+      sh -c "
+      echo '⏳ Waiting for database...' &&
+      until pg_isready -h db -p 5432 -U myuser -d mydb; do sleep 1; done &&
+      echo '✅ Database is ready!' &&
+      PGPASSWORD=mypassword psql -h db -U myuser -d mydb -tc \"SELECT 1 FROM pg_database WHERE datname='mydb_test'\" | grep -q 1 ||
+      PGPASSWORD=mypassword psql -h db -U myuser -d mydb -c 'CREATE DATABASE mydb_test;' &&
+      echo '🧪 Running tests...' &&
+      pytest -v app --disable-warnings --maxfail=1 --cov=app --cov-report=term-missing
+      "
+    environment:
+      POSTGRES_DB: mydb_test
+      POSTGRES_USER: myuser
+      POSTGRES_PASSWORD: mypassword
+      DB_HOST: db
+      DB_PORT: 5432
+      PYTHONPATH: /app
+    depends_on:
+      db:
+        condition: service_healthy
+    volumes:
+      - ./backend:/app
+    networks:
+      - default
+
 
 volumes:
   postgres_data:

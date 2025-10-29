@@ -4,3 +4,8 @@ psycopg2-binary
 sqlalchemy
 bcrypt==3.2.2
 passlib[bcrypt]==1.7.4
+python-dotenv
+pydantic
+pytest
+pytest-asyncio
+httpx
