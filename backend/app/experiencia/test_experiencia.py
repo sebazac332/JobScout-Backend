@@ -49,6 +49,65 @@ def test_create_experiencia(db):
     assert created_experiencia.cargo == experiencia_data["cargo"]
     assert created_experiencia.anos == experiencia_data["anos"]
 
+def test_update_experiencia(db):
+    user_data = user_schemas.UserCreate(
+        nome = "Mark",
+        cpf = "123.386.455-11",
+        email = "mark@user.com",
+        telefone = "6328-4432",
+        password = "userpasstest",
+        area_trabalho = "vendas",
+        nivel_educacao = "superior"
+    )
+
+    experiencia_data = experiencia_schemas.ExperienciaCreate(
+        empresa = "Empresa teste",
+        cargo = "Cargo teste",
+        anos = 5,
+        user_id = 1
+    )
+
+    user_functions.create_user(db, user_data)
+    created_experiencia = experiencia_functions.create_experiencia(db, experiencia_data)
+
+    update_data = experiencia_schemas.ExperienciaUpdate(
+        empresa="AtualizaCorp",
+        cargo="Cargo novo",
+        anos=10
+    )
+
+    updated_experiencia = experiencia_functions.update_experiencia(db, created_experiencia.id, update_data)
+
+    assert updated_experiencia.empresa == "AtualizaCorp"
+    assert updated_experiencia.cargo == "Cargo novo"
+    assert updated_experiencia.anos == 10
+
+def test_delete_experiencia(db):
+    user_data = user_schemas.UserCreate(
+        nome = "Mark",
+        cpf = "123.386.455-11",
+        email = "mark@user.com",
+        telefone = "6328-4432",
+        password = "userpasstest",
+        area_trabalho = "vendas",
+        nivel_educacao = "superior"
+    )
+
+    experiencia_data = experiencia_schemas.ExperienciaCreate(
+        empresa = "Empresa teste",
+        cargo = "Cargo teste",
+        anos = 5,
+        user_id = 1
+    )
+
+    user_functions.create_user(db, user_data)
+    created_experiencia = experiencia_functions.create_experiencia(db, experiencia_data)
+
+    deleted = experiencia_functions.delete_experiencia(db, created_experiencia.id)
+    assert deleted is not None
+
+    assert db.query(experiencia_functions.models.Experiencia).filter_by(id=created_experiencia.id).first() is None
+
 def test_get_experiencias_by_user(db):
     user_data = user_schemas.UserCreate(
         nome = "Mark",
@@ -130,6 +189,73 @@ def test_create_experiencia_endpoint():
     assert data_experiencia["empresa"] == experiencia_payload["empresa"]
     assert data_experiencia["cargo"] == experiencia_payload["cargo"]
     assert data_experiencia["anos"] == experiencia_payload["anos"]
+
+def test_update_empresa_endpoint():
+    user_payload = {
+        "nome": "Bobert",
+        "email": "bob@user.com",
+        "cpf": "987.654.321-00",
+        "telefone": "8888-8888",
+        "password": "bobadminintpass",
+        "area_trabalho": "Vendas",
+        "nivel_educacao": "superior"
+    }
+
+    response_user = client.post("/users/", json=user_payload)
+    assert response_user.status_code == 200 or response_user.status_code == 201
+    user_id = response_user.json()["id"]
+
+    experiencia_payload = {
+        "empresa": "Empresa teste",
+        "cargo": "Cargo teste",
+        "anos": 5,
+        "user_id": user_id
+    }
+
+    response_experiencia = client.post("/experiencias/", json=experiencia_payload)
+    assert response_experiencia.status_code == 200 or response_experiencia.status_code == 201
+    experiencia_id = response_experiencia.json()["id"]
+
+    update_payload = {"empresa": "PostUpdate", "cargo": "Cargo novo"}
+    response = client.put(f"/experiencias/{experiencia_id}", json=update_payload)
+
+    assert response.status_code == 200
+    data = response.json()
+    assert data["empresa"] == "PostUpdate"
+    assert data["cargo"] == "Cargo novo"
+
+
+def test_delete_empresa_endpoint():
+    user_payload = {
+        "nome": "Bobert",
+        "email": "bob@user.com",
+        "cpf": "987.654.321-00",
+        "telefone": "8888-8888",
+        "password": "bobadminintpass",
+        "area_trabalho": "Vendas",
+        "nivel_educacao": "superior"
+    }
+
+    response_user = client.post("/users/", json=user_payload)
+    assert response_user.status_code == 200 or response_user.status_code == 201
+    user_id = response_user.json()["id"]
+
+    experiencia_payload = {
+        "empresa": "Empresa teste",
+        "cargo": "Cargo teste",
+        "anos": 5,
+        "user_id": user_id
+    }
+
+    response_experiencia = client.post("/experiencias/", json=experiencia_payload)
+    assert response_experiencia.status_code == 200 or response_experiencia.status_code == 201
+    experiencia_id = response_experiencia.json()["id"]
+
+    response = client.delete(f"/experiencias/{experiencia_id}")
+    assert response.status_code == 200
+
+    response = client.get(f"/experiencias/{experiencia_id}")
+    assert response.status_code in (404, 400)
 
 def test_get_experiencia_user():
     user_payload = {

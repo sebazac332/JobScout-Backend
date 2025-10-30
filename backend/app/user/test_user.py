@@ -41,6 +41,48 @@ def test_create_user(db):
     assert created_user.email == user_data["email"]
     assert created_user.nome == user_data["nome"]
 
+def test_update_user(db):
+    user_data = user_schemas.UserCreate(
+        nome="Jane",
+        email="jane@user.com",
+        cpf="456.897.345-11",
+        telefone="3456-1234",
+        password="usergetemailpass",
+        area_trabalho = "engenharia automotiva",
+        nivel_educacao = "superior"
+    )
+    created_user = user_functions.create_user(db, user_data)
+
+    update_data = user_schemas.UserUpdate(
+        nome="Atualizado",
+        email="atualizado@admin.com",
+        telefone="1111-2222"
+    )
+
+    updated_user = user_functions.update_admin(db, created_user.id, update_data)
+
+    assert updated_user.nome == "Atualizado"
+    assert updated_user.email == "atualizado@admin.com"
+    assert updated_user.telefone == "1111-2222"
+
+def test_delete_admin(db):
+    user_data = user_schemas.UserCreate(
+        nome="Jane",
+        email="jane@user.com",
+        cpf="456.897.345-11",
+        telefone="3456-1234",
+        password="usergetemailpass",
+        area_trabalho = "engenharia automotiva",
+        nivel_educacao = "superior"
+    )
+    
+    created_user = user_functions.create_user(db, user_data)
+
+    deleted = user_functions.delete_user(db, created_user.id)
+    assert deleted is not None
+
+    assert db.query(user_functions.models.User).filter_by(id=created_user.id).first() is None
+
 def test_get_user_by_cpf(db):
     user_data = user_schemas.UserCreate(
         nome="Maria",
@@ -230,6 +272,47 @@ def test_create_user_endpoint():
     data = response.json()
     assert data["email"] == payload["email"]
     assert data["cpf"] == payload["cpf"]
+
+def test_update_user_endpoint():
+    payload = {
+        "nome": "Bobert",
+        "email": "bob@user.com",
+        "cpf": "987.654.321-00",
+        "telefone": "8888-8888",
+        "password": "bobuserintpass",
+        "area_trabalho": "Vendas",
+        "nivel_educacao": "superior"
+    }
+    response = client.post("/users/", json=payload)
+    user_id = response.json()["id"]
+
+    update_payload = {"nome": "PostUpdate", "telefone": "0000-1111"}
+    response = client.put(f"/users/{user_id}", json=update_payload)
+
+    assert response.status_code == 200
+    data = response.json()
+    assert data["nome"] == "PostUpdate"
+    assert data["telefone"] == "0000-1111"
+
+
+def test_delete_user_endpoint():
+    payload = {
+        "nome": "Bobert",
+        "email": "bob@user.com",
+        "cpf": "987.654.321-00",
+        "telefone": "8888-8888",
+        "password": "bobuserintpass",
+        "area_trabalho": "Vendas",
+        "nivel_educacao": "superior"
+    }
+    response = client.post("/users/", json=payload)
+    user_id = response.json()["id"]
+
+    response = client.delete(f"/users/{user_id}")
+    assert response.status_code == 200
+
+    response = client.get(f"/users/{user_id}")
+    assert response.status_code in (404, 400)
 
 @pytest.fixture
 def user_payload_email():

@@ -30,6 +30,18 @@ def test_create_competencia(db):
 
     assert created_competencia.nome == competencia_data["nome"]
 
+def test_delete_empresa(db):
+    competencia_data = {
+        "nome": "Java intermedio"
+    }
+
+    created_competencia = competencia_functions.create_competencia(db, competencia_data)
+
+    deleted = competencia_functions.delete_competencia(db, created_competencia.id)
+    assert deleted is not None
+
+    assert db.query(competencia_functions.models.Competencia).filter_by(id=created_competencia.id).first() is None
+
 def test_get_competencias(db):
     competencia_data_1 = competencia_schemas.CompetenciaCreate(
         nome="Python avancado"
@@ -79,6 +91,22 @@ def test_create_competencia_endpoint():
     assert response.status_code == 200 or response.status_code == 201
     data = response.json()
     assert data["nome"] == payload["nome"]
+
+def test_delete_empresa_endpoint():
+    payload = {
+        "nome": "Metodologias ageis"
+    }
+
+    response = client.post("/competencias/", json=payload)
+    assert response.status_code == 200 or response.status_code == 201
+    competencia_id = response.json()["id"]
+
+    response = client.delete(f"/competencias/{competencia_id}")
+    assert response.status_code == 200
+
+    response = client.get(f"/competencias/{competencia_id}")
+    assert response.status_code in (404, 400)
+
 
 def test_list_competencias_endpoint():
     competencia_payloads = [

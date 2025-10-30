@@ -15,6 +15,15 @@ def create_competencia(db: Session, competencia: schemas.CompetenciaCreate):
     db.refresh(db_competencia)
     return db_competencia
 
+def delete_competencia(db: Session, competencia_id: int):
+    db_competencia = db.query(models.Competencia).filter(models.Competencia.id == competencia_id).first()
+    
+    if not db_competencia:
+        return None
+
+    db.delete(db_competencia)
+    db.commit()
+    return db_competencia
 
 def get_competencias(db: Session):
     return db.query(models.Competencia).all()

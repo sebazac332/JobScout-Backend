@@ -1,4 +1,6 @@
 from pydantic import BaseModel
+from typing import Optional
+
 
 class AdminBase(BaseModel):
     nome: str
@@ -8,6 +10,13 @@ class AdminBase(BaseModel):
 
 class AdminCreate(AdminBase):
     password: str
+
+class AdminUpdate(BaseModel):
+    nome: Optional[str] = None
+    email: Optional[str] = None
+    cpf: Optional[str] = None
+    telefone: Optional[str] = None
+    password: Optional[str] = None
 
 class Admin(AdminBase):
     id: int

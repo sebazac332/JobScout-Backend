@@ -13,6 +13,20 @@ def register_user(user: schemas.UserCreate, db: Session = Depends(get_db)):
         raise HTTPException(status_code=400, detail="CPF already registered")
     return functions.create_user(db, user)
 
+@router.put("/users/{user_id}", response_model=schemas.Admin)
+def edit_user(user_id: int, user_update: schemas.UserUpdate, db: Session = Depends(get_db)):
+    user = functions.update_user(db, user_id, user_update)
+    if not user:
+        raise HTTPException(status_code=404, detail="Usuario não encontrado")
+    return user
+
+@router.delete("/users/{user_id}", response_model=schemas.Admin)
+def remove_user(user_id: int, db: Session = Depends(get_db)):
+    user = functions.delete_user(db, user_id)
+    if not user:
+        raise HTTPException(status_code=404, detail="Usuario não encontrado")
+    return user
+
 @router.post("/{user_id}/competencias/{competencia_id}")
 def add_competencia(user_id: int, competencia_id: int, db: Session = Depends(get_db)):
     return functions.add_competencia_to_user(db, user_id, competencia_id)

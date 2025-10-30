@@ -49,6 +49,66 @@ def test_create_empresa(db):
     assert created_empresa.nome == empresa_data["nome"]
     assert created_empresa.cep == empresa_data["cep"]
 
+def test_update_empresa(db):
+    admin_data = admin_schemas.AdminCreate(
+        nome="Marcus",
+        cpf="123.456.789-00",
+        email="Marcus@admin.com",
+        telefone="9999-9999",
+        password="adminpasstest"
+    )
+
+    empresa_data = empresa_schemas.EmpresaCreate(
+        nome="EmpresaCorp",
+        descricao="Empresa para testes",
+        cidade="Brasilia",
+        cep="12345678-12",
+        no_empregados=15,
+        anos_func=3,
+        admin_id=1
+    )
+
+    admin_functions.create_admin(db, admin_data)
+    created_empresa = empresa_functions.create_empresa(db, empresa_data)
+
+    update_data = empresa_schemas.EmpresaUpdate(
+        nome="AtualizaCorp",
+        descricao="Empresa atualizada",
+        cidade="Floreanopolis"
+    )
+
+    updated_empresa = empresa_functions.update_empresa(db, created_empresa.id, update_data)
+
+    assert updated_empresa.nome == "AtualizaCorp"
+    assert updated_empresa.descricao == "Empresa atualizada"
+    assert updated_empresa.cidade == "Floreanopolis"
+
+def test_delete_empresa(db):
+    admin_data = admin_schemas.AdminCreate(
+        nome="Marcus",
+        cpf="123.456.789-00",
+        email="Marcus@admin.com",
+        telefone="9999-9999",
+        password="adminpasstest"
+    )
+
+    empresa_data = empresa_schemas.EmpresaCreate(
+        nome="EmpresaCorp",
+        descricao="Empresa para testes",
+        cidade="Brasilia",
+        cep="12345678-12",
+        no_empregados=15,
+        anos_func=3,
+        admin_id=1
+    )
+    admin_functions.create_admin(db, admin_data)
+    created_empresa = empresa_functions.create_empresa(db, empresa_data)
+
+    deleted = empresa_functions.delete_user(db, created_empresa.id)
+    assert deleted is not None
+
+    assert db.query(empresa_functions.models.Empresa).filter_by(id=created_empresa.id).first() is None
+
 def test_get_empresas(db):
     admin_data = admin_schemas.AdminCreate(
         nome="Marcus",
@@ -146,7 +206,7 @@ def test_create_empresa_endpoint():
         "cep": "12345678-12",
         "no_empregados": 15,
         "anos_func": 3,
-        "admin_id": 1
+        "admin_id": admin_id
     }
 
     response = client.post("/empresas/", json=empresa_payload)
@@ -156,6 +216,75 @@ def test_create_empresa_endpoint():
     assert data["nome"] == "EmpresaCorp"
     assert data["descricao"] == "Empresa para testes"
     assert data["admin_id"] == admin_id
+
+def test_update_empresa_endpoint():
+    admin_payload = {
+        "nome": "Marcus",
+        "cpf": "123.456.789-00",
+        "email": "Marcus@admin.com",
+        "telefone": "9999-9999",
+        "password": "adminpasstest",
+    }
+
+    admin_response = client.post("/admins/", json=admin_payload)
+    assert admin_response.status_code == 200 or admin_response.status_code == 201
+    admin_id = admin_response.json()["id"]
+
+    empresa_payload = {
+        "nome": "EmpresaCorp",
+        "descricao": "Empresa para testes",
+        "cidade": "Brasilia",
+        "cep": "12345678-12",
+        "no_empregados": 15,
+        "anos_func": 3,
+        "admin_id": admin_id
+    }
+
+    response = client.post("/empresas/", json=empresa_payload)
+    assert response.status_code == 200 or response.status_code == 201
+    empresa_id = response.json()["id"]
+
+    update_payload = {"nome": "PostUpdate", "descricao": "Nova empresa atualizada"}
+    response = client.put(f"/empresas/{empresa_id}", json=update_payload)
+
+    assert response.status_code == 200
+    data = response.json()
+    assert data["nome"] == "PostUpdate"
+    assert data["descricao"] == "Nova empresa atualizada"
+
+
+def test_delete_empresa_endpoint():
+    admin_payload = {
+        "nome": "Marcus",
+        "cpf": "123.456.789-00",
+        "email": "Marcus@admin.com",
+        "telefone": "9999-9999",
+        "password": "adminpasstest",
+    }
+
+    admin_response = client.post("/admins/", json=admin_payload)
+    assert admin_response.status_code == 200 or admin_response.status_code == 201
+    admin_id = admin_response.json()["id"]
+
+    empresa_payload = {
+        "nome": "EmpresaCorp",
+        "descricao": "Empresa para testes",
+        "cidade": "Brasilia",
+        "cep": "12345678-12",
+        "no_empregados": 15,
+        "anos_func": 3,
+        "admin_id": admin_id
+    }
+
+    response = client.post("/empresas/", json=empresa_payload)
+    assert response.status_code == 200 or response.status_code == 201
+    empresa_id = response.json()["id"]
+
+    response = client.delete(f"/empresas/{empresa_id}")
+    assert response.status_code == 200
+
+    response = client.get(f"/empresas/{empresa_id}")
+    assert response.status_code in (404, 400)
 
 def test_list_empresas_endpoint():
     admin_payload = {

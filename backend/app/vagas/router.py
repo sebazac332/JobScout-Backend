@@ -9,6 +9,20 @@ router = APIRouter(prefix="/vagas", tags=["Vagas"])
 def create_vaga(vaga: schemas.VagaCreate, db: Session = Depends(get_db)):
     return functions.create_vagaemprego(db, vaga)
 
+@router.put("/vagas/{vaga_id}", response_model=schemas.VagaUpdate)
+def update_vaga(vaga_id: int, vaga_update: schemas.VagaUpdate, db: Session = Depends(get_db)):
+    updated = functions.update_vaga(db, vaga_id, vaga_update)
+    if not updated:
+        raise HTTPException(status_code=404, detail="Vaga não encontrada")
+    return updated
+
+@router.delete("/vagas/{vaga_id}", response_model=schemas.Empresa)
+def delete_vaga(vaga_id: int, db: Session = Depends(get_db)):
+    deleted = functions.delete_vaga(db, vaga_id)
+    if not deleted:
+        raise HTTPException(status_code=404, detail="Vaga não encontrada")
+    return deleted
+
 @router.get("/empresa/{empresa_id}", response_model=list[schemas.Vaga])
 def list_vagas_by_empresa(empresa_id: int, db: Session = Depends(get_db)):
     vagas = functions.get_vagas_by_empresa(db, empresa_id)

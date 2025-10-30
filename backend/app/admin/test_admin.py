@@ -35,6 +35,43 @@ def test_create_admin(db):
     assert created_admin.email == admin_data["email"]
     assert created_admin.nome == admin_data["nome"]
 
+def test_update_admin(db):
+    admin_data = schemas.AdminCreate(
+        nome="Anthony",
+        email="anthony@admin.com",
+        cpf="555.666.777-88",
+        telefone="8888-0000",
+        password="adminupdatepass"
+    )
+    created_admin = functions.create_admin(db, admin_data)
+
+    update_data = schemas.AdminUpdate(
+        nome="Atualizado",
+        email="atualizado@admin.com",
+        telefone="1111-2222"
+    )
+
+    updated_admin = functions.update_admin(db, created_admin.id, update_data)
+
+    assert updated_admin.nome == "Atualizado"
+    assert updated_admin.email == "atualizado@admin.com"
+    assert updated_admin.telefone == "1111-2222"
+
+def test_delete_admin(db):
+    admin_data = schemas.AdminCreate(
+        nome="Anthony",
+        email="anthony@admin.com",
+        cpf="555.666.777-88",
+        telefone="8888-0000",
+        password="adminupdatepass"
+    )
+    created_admin = functions.create_admin(db, admin_data)
+
+    deleted = functions.delete_admin(db, created_admin.id)
+    assert deleted is not None
+
+    assert db.query(functions.models.Admin).filter_by(id=created_admin.id).first() is None
+
 def test_get_admin_by_cpf(db):
     admin_data = schemas.AdminCreate(
         nome="Anthony",
@@ -103,6 +140,44 @@ def test_create_admin_endpoint():
     data = response.json()
     assert data["email"] == payload["email"]
     assert data["cpf"] == payload["cpf"]
+
+
+def test_update_admin_endpoint():
+    payload = {
+        "nome": "Bobert",
+        "email": "bob@admin.com",
+        "cpf": "987.654.321-00",
+        "telefone": "8888-8888",
+        "password": "bobadminintpass"
+    }
+    response = client.post("/admins/", json=payload)
+    admin_id = response.json()["id"]
+
+    update_payload = {"nome": "PostUpdate", "telefone": "0000-1111"}
+    response = client.put(f"/admins/{admin_id}", json=update_payload)
+
+    assert response.status_code == 200
+    data = response.json()
+    assert data["nome"] == "PostUpdate"
+    assert data["telefone"] == "0000-1111"
+
+
+def test_delete_admin_endpoint():
+    payload = {
+        "nome": "Bobert",
+        "email": "bob@admin.com",
+        "cpf": "987.654.321-00",
+        "telefone": "8888-8888",
+        "password": "bobadminintpass"
+    }
+    response = client.post("/admins/", json=payload)
+    admin_id = response.json()["id"]
+
+    response = client.delete(f"/admins/{admin_id}")
+    assert response.status_code == 200
+
+    response = client.get(f"/admins/{admin_id}")
+    assert response.status_code in (404, 400)
 
 @pytest.fixture
 def admin_payload_email():

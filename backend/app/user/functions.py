@@ -29,6 +29,37 @@ def create_user(db: Session, user: schemas.UserCreate):
     db.refresh(db_user)
     return db_user
 
+def update_user(db: Session, user_id: int, user_update: schemas.UserUpdate):
+    db_user = db.query(models.User).filter(models.User.id == user_id).first()
+
+    if not db_user:
+        return None
+
+    if user_update.nome is not None:
+        db_user.nome = user_update.nome
+    if user_update.email is not None:
+        db_user.email = user_update.email
+    if user_update.cpf is not None:
+        db_user.cpf = user_update.cpf
+    if user_update.telefone is not None:
+        db_user.telefone = user_update.telefone
+    if user_update.password is not None:
+        db_user.hashed_password = pwd_context.hash(user_update.password)
+
+    db.commit()
+    db.refresh(db_user)
+    return db_user
+
+def delete_user(db: Session, user_id: int):
+    db_user = db.query(models.User).filter(models.User.id == user_id).first()
+
+    if not db_user:
+        return None 
+
+    db.delete(db_user)
+    db.commit()
+    return db_user
+
 def get_users(db: Session):
     return db.query(models.User).all()
 

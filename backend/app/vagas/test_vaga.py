@@ -65,6 +65,83 @@ def test_create_vaga(db):
     assert created_vaga.descricao == vaga_data["descricao"]
     assert created_vaga.ceempresa_idp == vaga_data["empresa_id"]
 
+def test_update_vaga(db):
+    admin_data = admin_schemas.AdminCreate(
+        nome="Marcus",
+        cpf="123.456.789-00",
+        email="Marcus@admin.com",
+        telefone="9999-9999",
+        password="adminpasstest"
+    )
+    empresa_data = empresa_schemas.EmpresaCreate(
+        nome="EmpresaCorp",
+        descricao="Empresa para testes",
+        cidade="Brasilia",
+        cep="12345678-12",
+        no_empregados=15,
+        anos_func=3,
+        admin_id=1
+    )
+    vaga_data = vagas_schemas.VagaCreate(
+        titulo="Vaga estagio",
+        descricao="Uma vaga de estagio simples",
+        modalidade="Estagio",
+        salario=200.50,
+        no_vagas=5,
+        empresa_id=1
+    )
+
+    admin_functions.create_admin(db, admin_data)
+    empresa_functions.create_empresa(db, empresa_data)
+    created_vaga = vagas_functions.create_vaga(db, vaga_data)
+
+    update_data = empresa_schemas.EmpresaUpdate(
+        titulo="Vaga atualizada",
+        modalidade="Permanente",
+        salario=350.5
+    )
+
+    updated_vaga = vagas_functions.update_vaga(db, created_vaga.id, update_data)
+
+    assert updated_vaga.titulo == "Vaga atualizada"
+    assert updated_vaga.modalidade == "Permanente"
+    assert updated_vaga.salario == 350.5
+
+def test_delete_vaga(db):
+    admin_data = admin_schemas.AdminCreate(
+        nome="Marcus",
+        cpf="123.456.789-00",
+        email="Marcus@admin.com",
+        telefone="9999-9999",
+        password="adminpasstest"
+    )
+    empresa_data = empresa_schemas.EmpresaCreate(
+        nome="EmpresaCorp",
+        descricao="Empresa para testes",
+        cidade="Brasilia",
+        cep="12345678-12",
+        no_empregados=15,
+        anos_func=3,
+        admin_id=1
+    )
+    vaga_data = vagas_schemas.VagaCreate(
+        titulo="Vaga estagio",
+        descricao="Uma vaga de estagio simples",
+        modalidade="Estagio",
+        salario=200.50,
+        no_vagas=5,
+        empresa_id=1
+    )
+
+    admin_functions.create_admin(db, admin_data)
+    empresa_functions.create_empresa(db, empresa_data)
+    created_vaga = vagas_functions.create_vaga(db, vaga_data)
+
+    deleted = vagas_functions.delete_vaga(db, created_vaga.id)
+    assert deleted is not None
+
+    assert db.query(vagas_functions.models.Vagaemprego).filter_by(id=created_vaga.id).first() is None
+
 def test_get_vagas_by_empresa(db):
     admin_data = admin_schemas.AdminCreate(
         nome="Marcus",
@@ -264,6 +341,101 @@ def test_create_vaga_endpoint():
     assert data["nome"] == "Vaga estagio"
     assert data["descricao"] == "Uma vaga de estagio simples"
     assert data["empresa_id"] == empresa_id
+
+def test_update_vaga_endpoint():
+    admin_payload = {
+        "nome": "Marcus",
+        "cpf": "123.456.789-00",
+        "email": "Marcus@admin.com",
+        "telefone": "9999-9999",
+        "password": "adminpasstest",
+    }
+
+    admin_response = client.post("/admins/", json=admin_payload)
+    assert admin_response.status_code == 200 or admin_response.status_code == 201
+    admin_id = admin_response.json()["id"]
+
+    empresa_payload = {
+        "nome": "EmpresaCorp",
+        "descricao": "Empresa para testes",
+        "cidade": "Brasilia",
+        "cep": "12345678-12",
+        "no_empregados": 15,
+        "anos_func": 3,
+        "admin_id": admin_id
+    }
+
+    empresa_response = client.post("/empresas/", json=empresa_payload)
+    assert empresa_response.status_code == 200 or empresa_response.status_code == 201
+    empresa_id = empresa_response.json()["id"]
+
+    vaga_payload = {
+        "titulo": "Vaga estagio",
+        "descricao": "Uma vaga de estagio simples",
+        "modalidade": "Estagio",
+        "salario": 200.50,
+        "no_vagas": 5,
+        "empresa_id": empresa_id
+    }
+
+    vaga_response = client.post("/vagas/", json=vaga_payload)
+    assert vaga_response.status_code == 200 or vaga_response.status_code == 201
+    vaga_id = vaga_response.json()["id"]
+
+    update_payload = {"titulo": "PostUpdate", "descricao": "Nova vaga atualizada"}
+    response = client.put(f"/vagas/{vaga_id}", json=update_payload)
+
+    assert response.status_code == 200
+    data = response.json()
+    assert data["titulo"] == "PostUpdate"
+    assert data["descricao"] == "Nova vaga atualizada"
+
+
+def test_delete_vaga_endpoint():
+    admin_payload = {
+        "nome": "Marcus",
+        "cpf": "123.456.789-00",
+        "email": "Marcus@admin.com",
+        "telefone": "9999-9999",
+        "password": "adminpasstest",
+    }
+
+    admin_response = client.post("/admins/", json=admin_payload)
+    assert admin_response.status_code == 200 or admin_response.status_code == 201
+    admin_id = admin_response.json()["id"]
+
+    empresa_payload = {
+        "nome": "EmpresaCorp",
+        "descricao": "Empresa para testes",
+        "cidade": "Brasilia",
+        "cep": "12345678-12",
+        "no_empregados": 15,
+        "anos_func": 3,
+        "admin_id": admin_id
+    }
+
+    empresa_response = client.post("/empresas/", json=empresa_payload)
+    assert empresa_response.status_code == 200 or empresa_response.status_code == 201
+    empresa_id = empresa_response.json()["id"]
+
+    vaga_payload = {
+        "titulo": "Vaga estagio",
+        "descricao": "Uma vaga de estagio simples",
+        "modalidade": "Estagio",
+        "salario": 200.50,
+        "no_vagas": 5,
+        "empresa_id": empresa_id
+    }
+
+    vaga_response = client.post("/vagas/", json=vaga_payload)
+    assert vaga_response.status_code == 200 or vaga_response.status_code == 201
+    vaga_id = vaga_response.json()["id"]
+
+    response = client.delete(f"/vagas/{vaga_id}")
+    assert response.status_code == 200
+
+    response = client.get(f"/vagas/{vaga_id}")
+    assert response.status_code in (404, 400)
 
 def test_list_vagas_by_empresa_endpoint():
     admin_payload = {
