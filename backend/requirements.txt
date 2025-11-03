@@ -9,3 +9,5 @@ pydantic
 pytest
 pytest-asyncio
 httpx
+python-jose[cryptography]
+requests

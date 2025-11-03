@@ -2,6 +2,7 @@ from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 from app.database import get_db
 from . import schemas, functions
+from app.dependencies.auth import get_current_admin
 
 router = APIRouter(prefix="/empresas", tags=["Empresas"])
 
