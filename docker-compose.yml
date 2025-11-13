@@ -18,6 +18,8 @@ services:
       interval: 5s
       timeout: 5s
       retries: 5
+    networks:
+      - jobscout_net
 
   pgadmin:
     image: dpage/pgadmin4:8
@@ -33,6 +35,8 @@ services:
       - pgadmin_data:/var/lib/pgadmin  
     depends_on:
       - db
+    networks:
+      - jobscout_net
 
   backend:
     build: ./backend
@@ -49,6 +53,8 @@ services:
     depends_on:
       db:
         condition: service_healthy
+    networks:
+      - jobscout_net
 
   tests:
     build: ./backend
@@ -76,8 +82,12 @@ services:
     volumes:
       - ./backend:/app
     networks:
-      - default
+      - jobscout_net
 
 volumes:
   postgres_data:
   pgadmin_data:
+
+networks:
+  jobscout_net:
+    external: true
