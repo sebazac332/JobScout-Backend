@@ -1,11 +1,9 @@
 from sqlalchemy.orm import Session
-from passlib.context import CryptContext
 from fastapi import HTTPException
 
 from app.model import models
+from app.dependencies import utils
 from . import schemas
-
-pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
 def get_user_by_email(db: Session, email: str):
     return db.query(models.User).filter(models.User.email == email).first()
@@ -14,7 +12,7 @@ def get_user_by_cpf(db: Session, cpf: str):
     return db.query(models.User).filter(models.User.cpf == cpf).first()
 
 def create_user(db: Session, user: schemas.UserCreate):
-    hashed_pw = pwd_context.hash(user.password)
+    hashed_pw = utils.hash_password(user.password)
     db_user = models.User(
         nome=user.nome,
         email=user.email,
@@ -44,7 +42,7 @@ def update_user(db: Session, user_id: int, user_update: schemas.UserUpdate):
     if user_update.telefone is not None:
         db_user.telefone = user_update.telefone
     if user_update.password is not None:
-        db_user.hashed_password = pwd_context.hash(user_update.password)
+        db_user.hashed_password = utils.hash_password(user_update.password)
 
     db.commit()
     db.refresh(db_user)

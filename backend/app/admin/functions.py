@@ -1,10 +1,8 @@
 from sqlalchemy.orm import Session
-from passlib.context import CryptContext
 
 from app.model import models
+from app.dependencies import utils
 from . import schemas
-
-pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
 def get_admin_by_email(db: Session, email: str):
     return db.query(models.Admin).filter(models.Admin.email == email).first()
@@ -13,7 +11,8 @@ def get_admin_by_cpf(db: Session, cpf: str):
     return db.query(models.Admin).filter(models.Admin.cpf == cpf).first()
 
 def create_admin(db: Session, admin: schemas.AdminCreate):
-    hashed_pw = pwd_context.hash(admin.password)
+    hashed_pw = utils.hash_password(admin.password)
+
     db_admin = models.Admin(
         nome=admin.nome,
         email=admin.email,
@@ -41,7 +40,7 @@ def update_admin(db: Session, admin_id: int, admin_update: schemas.AdminUpdate):
     if admin_update.telefone is not None:
         db_admin.telefone = admin_update.telefone
     if admin_update.password is not None:
-        db_admin.hashed_password = pwd_context.hash(admin_update.password)
+        db_admin.hashed_password = utils.hash_password(admin_update.password)
 
     db.commit()
     db.refresh(db_admin)
