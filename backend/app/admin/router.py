@@ -20,17 +20,15 @@ def edit_admin(admin_id: int, admin_update: schemas.AdminUpdate, db: Session = D
     admin = functions.update_admin(db, admin_id, admin_update)
     if not admin:
         raise HTTPException(status_code=404, detail="Admin não encontrado")
-    return {
-        "message": f"{current_admin['email']}: Admin atualizado com sucesso!",
-        "admin": admin
-    }
+    return admin
 
 @router.delete("/{admin_id}", response_model=schemas.Admin)
 def remove_admin(admin_id: int, db: Session = Depends(get_db), current_admin: dict = Depends(get_current_admin)):
     admin = functions.delete_admin(db, admin_id)
     if not admin:
         raise HTTPException(status_code=404, detail="Admin não encontrado")
-    return {
-        "message": f"{current_admin['email']}: Admin removido com sucesso!",
-        "admin": admin
-    }
+    return admin
+
+@router.get("/me", response_model=schemas.Admin)
+def get_me(current_admin=Depends(get_current_admin)):
+    return current_admin

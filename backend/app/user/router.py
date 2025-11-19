@@ -42,3 +42,7 @@ def remove_competencia(user_id: int, competencia_id: int, db: Session = Depends(
 def list_competencias(user_id: int, db: Session = Depends(get_db)):
     list = functions.get_user_competencias(db, user_id)
     return list
+
+@router.get("/me", response_model=schemas.User)
+def get_me(current_user=Depends(get_current_regular_user)):
+    return current_user
