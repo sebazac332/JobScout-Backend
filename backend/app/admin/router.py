@@ -4,6 +4,7 @@ from app.database import get_db
 from . import schemas, functions
 from fastapi import APIRouter, Depends
 from app.dependencies.auth import get_current_admin
+from app.model import models
 
 router = APIRouter(prefix="/admins", tags=["Admins"])
 
@@ -30,5 +31,11 @@ def remove_admin(admin_id: int, db: Session = Depends(get_db), current_admin: di
     return admin
 
 @router.get("/me", response_model=schemas.Admin)
-def get_me(current_admin=Depends(get_current_admin)):
-    return current_admin
+def read_admin_me(
+    db: Session = Depends(get_db),
+    current_admin: dict = Depends(get_current_admin)
+):
+    admin = db.query(models.Admin).filter(models.Admin.email == current_admin["email"]).first()
+    if not admin:
+        raise HTTPException(status_code=404, detail="Admin not found")
+    return admin

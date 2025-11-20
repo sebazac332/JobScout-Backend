@@ -3,6 +3,7 @@ from sqlalchemy.orm import Session
 from app.database import get_db
 from . import schemas, functions
 from app.dependencies.auth import get_current_regular_user
+from app.model import models
 
 router = APIRouter(prefix="/users", tags=["Users"])
 
@@ -44,5 +45,11 @@ def list_competencias(user_id: int, db: Session = Depends(get_db)):
     return list
 
 @router.get("/me", response_model=schemas.User)
-def get_me(current_user=Depends(get_current_regular_user)):
-    return current_user
+def get_me(
+    db: Session = Depends(get_db),
+    current_user: dict = Depends(get_current_regular_user)
+):
+    user = db.query(models.User).filter(models.User.email == current_user["email"]).first()
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+    return user
