@@ -1,7 +1,8 @@
 from fastapi import APIRouter, Depends, HTTPException
-from sqlalchemy.orm import Session
+from sqlalchemy.orm import Session, selectinload
 from app.database import get_db
 from . import schemas, functions
+from app.model import models
 from app.dependencies.auth import get_current_admin, get_current_user, get_current_regular_user
 
 router = APIRouter(prefix="/vagas", tags=["Vagas"])
@@ -56,3 +57,8 @@ def remove_competencia(vaga_id: int, competencia_id: int, db: Session = Depends(
 @router.get("/{vaga_id}/competencias")
 def list_competencias(vaga_id: int, db: Session = Depends(get_db), all_users: dict = Depends(get_current_user)):
     return functions.get_vaga_competencias(db, vaga_id)
+
+@router.get("/with-applications", response_model=list[schemas.VagaWithUsers])
+def get_vagas_with_users(db: Session = Depends(get_db), current_admin: dict = Depends(get_current_admin)):
+    vagas = db.query(models.VagaEmprego).options(selectinload(models.VagaEmprego.users)).all()
+    return vagas

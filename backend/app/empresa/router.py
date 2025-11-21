@@ -7,18 +7,18 @@ from app.dependencies.auth import get_current_admin
 router = APIRouter(prefix="/empresas", tags=["Empresas"])
 
 @router.post("/", response_model=schemas.Empresa)
-def register_admin(empresa: schemas.EmpresaCreate, db: Session = Depends(get_db)):
+def create_empresa(empresa: schemas.EmpresaCreate, db: Session = Depends(get_db), current_admin: dict = Depends(get_current_admin)):
     return functions.create_empresa(db, empresa)
 
-@router.put("/empresas/{empresa_id}", response_model=schemas.Empresa)
-def update_empresa(empresa_id: int, empresa_update: schemas.EmpresaUpdate, db: Session = Depends(get_db)):
+@router.put("/{empresa_id}", response_model=schemas.Empresa)
+def update_empresa(empresa_id: int, empresa_update: schemas.EmpresaUpdate, db: Session = Depends(get_db), current_admin: dict = Depends(get_current_admin)):
     updated = functions.update_empresa(db, empresa_id, empresa_update)
     if not updated:
         raise HTTPException(status_code=404, detail="Empresa não encontrada")
     return updated
 
-@router.delete("/empresas/{empresa_id}", response_model=schemas.Empresa)
-def delete_empresa(empresa_id: int, db: Session = Depends(get_db)):
+@router.delete("/{empresa_id}", response_model=schemas.Empresa)
+def delete_empresa(empresa_id: int, db: Session = Depends(get_db), current_admin: dict = Depends(get_current_admin)):
     deleted = functions.delete_empresa(db, empresa_id)
     if not deleted:
         raise HTTPException(status_code=404, detail="Empresa não encontrada")

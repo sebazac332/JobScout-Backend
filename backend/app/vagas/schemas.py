@@ -1,6 +1,7 @@
 from pydantic import BaseModel
 from app.competencia.schemas import Competencia
 from typing import Optional
+from typing import List
 
 class VagasBase(BaseModel):
     titulo: str
@@ -26,3 +27,17 @@ class Vaga(VagasBase):
 
     class Config:
         orm_mode = True
+
+class UserInVaga(BaseModel):
+    id: int
+    name: str
+
+    class Config:
+        orm_mode = True
+
+class VagaWithUsers(BaseModel):
+    id: int
+    titulo: str
+    users: List[UserInVaga] = []
+
+    class Config:
