@@ -58,7 +58,22 @@ def remove_competencia(vaga_id: int, competencia_id: int, db: Session = Depends(
 def list_competencias(vaga_id: int, db: Session = Depends(get_db), all_users: dict = Depends(get_current_user)):
     return functions.get_vaga_competencias(db, vaga_id)
 
-@router.get("/with-applications", response_model=list[schemas.VagaWithUsers])
-def get_vagas_with_users(db: Session = Depends(get_db), current_admin: dict = Depends(get_current_admin)):
-    vagas = db.query(models.VagaEmprego).options(selectinload(models.VagaEmprego.users)).all()
+@router.get("/admin-with-applications", response_model=list[schemas.VagaWithUsers])
+def get_vagas_for_admin(
+    db: Session = Depends(get_db),
+    current_admin: dict = Depends(get_current_admin)
+):
+    admin_id = current_admin["id"]
+    vagas = db.query(models.Vagaemprego) \
+        .join(models.Empresa, models.Vagaemprego.empresa_id == models.Empresa.id) \
+        .options(selectinload(models.Vagaemprego.candidatos)) \
+        .filter(models.Empresa.admin_id == admin_id) \
+        .all()
+    
+    return vagas
+
+@router.get("/admin", response_model=list[schemas.Vaga])
+def get_vagas_for_admin(db: Session = Depends(get_db), current_admin: dict = Depends(get_current_admin)):
+    admin_id = current_admin["id"]
+    vagas = functions.get_vagas_by_admin(db, admin_id)
     return vagas

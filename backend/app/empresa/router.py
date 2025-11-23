@@ -27,3 +27,8 @@ def delete_empresa(empresa_id: int, db: Session = Depends(get_db), current_admin
 @router.get("/", response_model=list[schemas.Empresa])
 def list_empresas(db: Session = Depends(get_db)):
     return functions.get_empresas(db)
+
+@router.get("/admin", response_model=list[schemas.Empresa])
+def get_empresas_for_admin(db: Session = Depends(get_db), current_admin: dict = Depends(get_current_admin)):
+    empresas = functions.get_empresas_by_admin(db, current_admin["id"])
+    return empresas

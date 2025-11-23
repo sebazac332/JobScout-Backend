@@ -18,15 +18,15 @@ def update_vaga(db: Session, vaga_id: int, vaga_update: schemas.VagaUpdate):
         return None
 
     if vaga_update.titulo is not None:
-        db_vaga.titulo = db_vaga.titulo
+        db_vaga.titulo = vaga_update.titulo
     if vaga_update.descricao is not None:
-        db_vaga.descricao = db_vaga.descricao
+        db_vaga.descricao = vaga_update.descricao
     if vaga_update.modalidade is not None:
-        db_vaga.modalidade = db_vaga.modalidade
+        db_vaga.modalidade = vaga_update.modalidade
     if vaga_update.salario is not None:
-        db_vaga.salario = db_vaga.salario
+        db_vaga.salario = vaga_update.salario
     if vaga_update.no_vagas is not None:
-        db_vaga.no_vagas = db_vaga.no_vagas
+        db_vaga.no_vagas = vaga_update.no_vagas
 
     db.commit()
     db.refresh(db_vaga)
@@ -44,6 +44,10 @@ def delete_vaga(db: Session, vaga_id: int):
 
 def get_vagas_by_empresa(db: Session, empresa_id: int):
     return db.query(models.Vagaemprego).filter(models.Vagaemprego.empresa_id == empresa_id).all()
+
+def get_vagas_by_admin(db: Session, admin_id: int):
+    vagas = db.query(models.Vagaemprego).join(models.Empresa, models.Vagaemprego.empresa_id == models.Empresa.id).filter(models.Empresa.admin_id == admin_id).all()
+    return vagas
 
 def add_competencia_to_vaga(db: Session, vaga_id: int, competencia_id: int):
     vaga = db.query(models.Vagaemprego).get(vaga_id)

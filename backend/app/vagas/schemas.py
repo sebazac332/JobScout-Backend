@@ -41,3 +41,4 @@ class VagaWithUsers(BaseModel):
     users: List[UserInVaga] = []
 
     class Config:
+        orm_mode = True

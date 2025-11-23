@@ -9,7 +9,7 @@ router = APIRouter(prefix="/competencias", tags=["Competencias"])
 def create_competencia(competencia: schemas.CompetenciaCreate, db: Session = Depends(get_db)):
     return functions.create_competencia(db, competencia)
 
-@router.delete("/competencias/{competencia_id}", response_model=schemas.Competencia)
+@router.delete("/{competencia_id}", response_model=schemas.Competencia)
 def delete_competencia(competencia_id: int, db: Session = Depends(get_db)):
     deleted_competencia = functions.delete_competencia(db, competencia_id)
     if not deleted_competencia:
