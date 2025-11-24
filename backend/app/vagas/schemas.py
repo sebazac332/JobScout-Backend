@@ -17,7 +17,7 @@ class VagaUpdate(BaseModel):
     titulo: Optional[str] = None
     descricao: Optional[str] = None
     modalidade: Optional[str] = None
-    salario: Optional[str] = None
+    salario: Optional[float] = None
     no_vagas: Optional[int] = None
 
 class Vaga(VagasBase):
