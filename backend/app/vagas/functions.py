@@ -42,6 +42,11 @@ def delete_vaga(db: Session, vaga_id: int):
     db.commit()
     return db_vaga
 
+def get_vagas(db: Session):
+    return db.query(models.Vagaemprego) \
+             .options(selectinload(models.Vagaemprego.competencias)) \
+             .all()
+
 def get_vagas_by_empresa(db: Session, empresa_id: int):
     return db.query(models.Vagaemprego).filter(models.Vagaemprego.empresa_id == empresa_id).all()
 
@@ -93,3 +98,26 @@ def get_vaga_competencias(db: Session, vaga_id: int):
     if not vaga:
         return {"error": "Vaga not found"}
     return vaga.competencias
+
+def get_vagas_with_applications_for_admin(db: Session, admin_id: int):
+    vagas = db.query(models.Vagaemprego) \
+        .join(models.Empresa, models.Vagaemprego.empresa_id == models.Empresa.id) \
+        .options(selectinload(models.Vagaemprego.candidatos)) \
+        .filter(models.Empresa.admin_id == admin_id) \
+        .all()
+    
+    if not vagas:
+        raise HTTPException(status_code=404, detail="No vagas found for this admin")
+    
+    result = []
+    for vaga in vagas:
+        result.append({
+            "id": vaga.id,
+            "titulo": vaga.titulo,
+            "empresa_id": vaga.empresa_id,
+            "users": [
+                {"id": user.id, "name": user.nome} for user in vaga.candidatos
+            ]
+        })
+    
+    return result
