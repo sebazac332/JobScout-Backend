@@ -38,6 +38,7 @@ class UserInVaga(BaseModel):
 class VagaWithUsers(BaseModel):
     id: int
     titulo: str
+    empresa_id: int
     users: List[UserInVaga] = []
 
     class Config:

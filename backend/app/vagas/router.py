@@ -54,6 +54,13 @@ def remove_competencia(vaga_id: int, competencia_id: int, db: Session = Depends(
     deleted = functions.remove_competencia_from_vaga(db, vaga_id, competencia_id)
     return deleted
 
+@router.delete("/{vaga_id}/competencias", response_model=schemas.Vaga)
+def clear_competencias(vaga_id: int, db: Session = Depends(get_db)):
+    cleared = functions.clear_vaga_competencias(db, vaga_id)
+    if not cleared:
+        raise HTTPException(status_code=404, detail="Vaga não encontrada")
+    return cleared
+
 @router.get("/{vaga_id}/competencias")
 def list_competencias(vaga_id: int, db: Session = Depends(get_db), all_users: dict = Depends(get_current_user)):
     return functions.get_vaga_competencias(db, vaga_id)

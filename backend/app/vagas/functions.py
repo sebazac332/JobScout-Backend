@@ -78,6 +78,16 @@ def remove_competencia_from_vaga(db: Session, vaga_id: int, competencia_id: int)
     db.commit()
     return {"message": "Competência removida da vaga com sucesso"}
 
+def clear_vaga_competencias(db: Session, vaga_id: int):
+    vaga = db.query(models.Vagaemprego).filter(models.Vagaemprego.id == vaga_id).first()
+    if not vaga:
+        return None
+
+    vaga.competencias.clear()
+    db.commit()
+    db.refresh(vaga)
+    return vaga
+
 def get_vaga_competencias(db: Session, vaga_id: int):
     vaga = db.query(models.Vagaemprego).filter(models.Vagaemprego.id == vaga_id).first()
     if not vaga:
