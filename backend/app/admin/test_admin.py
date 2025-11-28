@@ -103,7 +103,9 @@ def test_get_admin_by_email(db):
     assert fetched.cpf == "444.111.999-88"
 
 # Integration tests
-
+# ---------------------------
+# Database setup for integration tests
+# ---------------------------
 SQLALCHEMY_DATABASE_URL_INTEGRATION = "sqlite:///./test_admin_integration.db"
 engine_integration = create_engine(SQLALCHEMY_DATABASE_URL_INTEGRATION, connect_args={"check_same_thread": False})
 TestingSessionLocal_integration = sessionmaker(autocommit=False, autoflush=False, bind=engine_integration)
@@ -121,12 +123,21 @@ app.dependency_overrides[get_db] = override_get_db
 def setup_and_teardown_db():
     Base.metadata.create_all(bind=engine_integration)
     yield
-    TestingSessionLocal_integration().close_all()
     Base.metadata.drop_all(bind=engine_integration)
 
 client = TestClient(app)
 
-def test_create_admin_endpoint():
+@pytest.fixture
+def admin_headers():
+    login_res = requests.post(
+        "http://localhost:8001/auth/token",
+        data={"username": "testadmin@example.com", "password": "testadminpass"}
+    )
+    login_res.raise_for_status()
+    token = login_res.json()["access_token"]
+    return {"Authorization": f"Bearer {token}"}
+
+def test_create_admin_endpoint(admin_headers):
     payload = {
         "nome": "Bobert",
         "email": "bob@admin.com",
@@ -135,14 +146,13 @@ def test_create_admin_endpoint():
         "password": "bobadminintpass"
     }
 
-    response = client.post("/admins/", json=payload)
-    assert response.status_code == 200 or response.status_code == 201
+    response = client.post("/admins/", json=payload, headers=admin_headers)
+    assert response.status_code in (200, 201)
     data = response.json()
     assert data["email"] == payload["email"]
     assert data["cpf"] == payload["cpf"]
 
-
-def test_update_admin_endpoint():
+def test_update_admin_endpoint(admin_headers):
     payload = {
         "nome": "Bobert",
         "email": "bob@admin.com",
@@ -150,19 +160,17 @@ def test_update_admin_endpoint():
         "telefone": "8888-8888",
         "password": "bobadminintpass"
     }
-    response = client.post("/admins/", json=payload)
+    response = client.post("/admins/", json=payload, headers=admin_headers)
     admin_id = response.json()["id"]
 
     update_payload = {"nome": "PostUpdate", "telefone": "0000-1111"}
-    response = client.put(f"/admins/{admin_id}", json=update_payload)
-
+    response = client.put(f"/admins/{admin_id}", json=update_payload, headers=admin_headers)
     assert response.status_code == 200
     data = response.json()
     assert data["nome"] == "PostUpdate"
     assert data["telefone"] == "0000-1111"
 
-
-def test_delete_admin_endpoint():
+def test_delete_admin_endpoint(admin_headers):
     payload = {
         "nome": "Bobert",
         "email": "bob@admin.com",
@@ -170,13 +178,13 @@ def test_delete_admin_endpoint():
         "telefone": "8888-8888",
         "password": "bobadminintpass"
     }
-    response = client.post("/admins/", json=payload)
+    response = client.post("/admins/", json=payload, headers=admin_headers)
     admin_id = response.json()["id"]
 
-    response = client.delete(f"/admins/{admin_id}")
+    response = client.delete(f"/admins/{admin_id}", headers=admin_headers)
     assert response.status_code == 200
 
-    response = client.get(f"/admins/{admin_id}")
+    response = client.get(f"/admins/{admin_id}", headers=admin_headers)
     assert response.status_code in (404, 400)
 
 @pytest.fixture
@@ -199,25 +207,24 @@ def admin_payload_cpf():
         "password": "patadmingetpass"
     }
 
-def test_register_admin(admin_payload_email):
-    response = client.post("/admins/", json=admin_payload_email)
-    assert response.status_code == 200 or response.status_code == 201
+def test_register_admin(admin_headers, admin_payload_email):
+    response = client.post("/admins/", json=admin_payload_email, headers=admin_headers)
+    assert response.status_code in (200, 201)
     result = response.json()
     assert result["email"] == "pat@admin.com"
     assert result["cpf"] == "332.654.358-88"
 
-def test_register_admin_duplicate_email(admin_payload_email):
-    client.post("/admins/", json=admin_payload_email)
-    response = client.post("/admins/", json=admin_payload_email)
+def test_register_admin_duplicate_email(admin_headers, admin_payload_email):
+    client.post("/admins/", json=admin_payload_email, headers=admin_headers)
+    response = client.post("/admins/", json=admin_payload_email, headers=admin_headers)
     assert response.status_code == 400
     assert "Email already registered" in response.text
 
-def test_register_admin_duplicate_cpf(admin_payload_cpf):
-    client.post("/admins/", json=admin_payload_cpf)
+def test_register_admin_duplicate_cpf(admin_headers, admin_payload_cpf):
+    client.post("/admins/", json=admin_payload_cpf, headers=admin_headers)
 
     duplicate_cpf_payload = admin_payload_cpf.copy()
     duplicate_cpf_payload["email"] = "yetanotherpat@admin.com"
-
-    response = client.post("/admins/", json=duplicate_cpf_payload)
+    response = client.post("/admins/", json=duplicate_cpf_payload, headers=admin_headers)
     assert response.status_code == 400
     assert "CPF already registered" in response.text
