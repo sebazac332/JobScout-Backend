@@ -50,3 +50,30 @@ def get_me(db: Session = Depends(get_db), current_regular_user: dict = Depends(g
     if not user:
         raise HTTPException(status_code=404, detail="User not found")
     return user
+
+@router.get("/{user_id}/applications")
+def list_user_applications(user_id: int, db: Session = Depends(get_db)):
+    user = db.query(models.User).filter(models.User.id == user_id).first()
+
+    if not user:
+        raise HTTPException(status_code=404, detail="Usuário não encontrado")
+
+    applications = []
+    for vaga in user.vagas_aplicadas:
+        applications.append({
+            "app": {
+                "id": vaga.id,
+                "vaga_id": vaga.id
+            },
+            "job": {
+                "id": vaga.id,
+                "titulo": vaga.titulo,
+                "descricao": vaga.descricao,
+                "salario": vaga.salario,
+                "modalidade": vaga.modalidade,
+                "no_vagas": vaga.no_vagas,
+                "empresa_id": vaga.empresa.id,
+                "competencias": [c.nome for c in vaga.competencias]
+            }
+        })
+    return applications

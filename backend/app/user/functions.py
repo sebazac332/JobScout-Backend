@@ -66,15 +66,15 @@ def apply_to_vaga(db: Session, user_id: int, vaga_id: int):
     vaga = db.query(models.Vagaemprego).get(vaga_id)
 
     if not user or not vaga:
-        raise HTTPException(status_code=404, detail="User or Vaga not found")
+        raise HTTPException(status_code=404, detail="Usuário ou vaga não encontrado")
 
     if user in vaga.candidatos:
-        raise HTTPException(status_code=400, detail="User already applied to this vaga")
+        raise HTTPException(status_code=400, detail="Usuário já candidatou a issa vaga")
 
     vaga.candidatos.append(user)
     db.commit()
     db.refresh(vaga)
-    return {"message": "User applied successfully!"}
+    return {"message": "Usuário candidatou com exito!"}
 
 def add_competencia_to_user(db: Session, user_id: int, competencia_id: int):
     user = db.query(models.User).get(user_id)
@@ -108,5 +108,13 @@ def remove_competencia_from_user(db: Session, user_id: int, competencia_id: int)
 def get_user_competencias(db: Session, user_id: int):
     user = db.query(models.User).filter(models.User.id == user_id).first()
     if not user:
-        return {"error": "User not found"}
+        return {"error": "Usuario não encontrado"}
     return user.competencias
+
+def get_user_applications(db: Session, user_id: int):
+    user = db.query(models.User).filter(models.User.id == user_id).first()
+
+    if not user:
+        raise HTTPException(status_code=404, detail="Usuario não encontrado")
+
+    return [{"vaga_id": vaga.id, "titulo": vaga.titulo} for vaga in user.vagas_aplicadas]

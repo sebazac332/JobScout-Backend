@@ -70,7 +70,7 @@ def list_competencias(vaga_id: int, db: Session = Depends(get_db), all_users: di
     return functions.get_vaga_competencias(db, vaga_id)
 
 @router.get("/admin-with-applications", response_model=list[schemas.VagaWithUsers])
-def get_vagas_for_admin(db: Session = Depends(get_db), current_admin: dict = Depends(get_current_admin)):
+def get_vagas_application_for_admin(db: Session = Depends(get_db), current_admin: dict = Depends(get_current_admin)):
     return functions.get_vagas_with_applications_for_admin(db, current_admin["id"])
 
 @router.get("/admin", response_model=list[schemas.Vaga])

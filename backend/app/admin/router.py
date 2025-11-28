@@ -31,10 +31,7 @@ def remove_admin(admin_id: int, db: Session = Depends(get_db), current_admin: di
     return admin
 
 @router.get("/me", response_model=schemas.Admin)
-def read_admin_me(
-    db: Session = Depends(get_db),
-    current_admin: dict = Depends(get_current_admin)
-):
+def read_admin_me(db: Session = Depends(get_db), current_admin: dict = Depends(get_current_admin)):
     admin = db.query(models.Admin).filter(models.Admin.email == current_admin["email"]).first()
     if not admin:
         raise HTTPException(status_code=404, detail="Admin not found")

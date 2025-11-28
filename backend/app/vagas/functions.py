@@ -1,4 +1,4 @@
-from sqlalchemy.orm import Session
+from sqlalchemy.orm import Session, selectinload
 
 from app.model import models
 from . import schemas
@@ -105,9 +105,6 @@ def get_vagas_with_applications_for_admin(db: Session, admin_id: int):
         .options(selectinload(models.Vagaemprego.candidatos)) \
         .filter(models.Empresa.admin_id == admin_id) \
         .all()
-    
-    if not vagas:
-        raise HTTPException(status_code=404, detail="No vagas found for this admin")
     
     result = []
     for vaga in vagas:
