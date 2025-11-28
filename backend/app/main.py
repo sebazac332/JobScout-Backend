@@ -13,13 +13,9 @@ from app.competencia.router import router as competencias_router
 
 app = FastAPI()
 
-origins = [
-    "https://jobscout-frontend-production.up.railway.app"
-]
-
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins="https://jobscout-frontend-production.up.railway.app",
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
