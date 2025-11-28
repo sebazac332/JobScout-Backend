@@ -1,6 +1,7 @@
 import bcrypt
 from jose import jwt
 from datetime import datetime, timedelta
+import os
 
 SECRET_KEY = os.getenv("SECRET_KEY")
 ALGORITHM = os.getenv("ALGORITHM")
