@@ -4,10 +4,10 @@ from jose import jwt, JWTError
 import requests
 import os
 
-oauth2_scheme = OAuth2PasswordBearer(tokenUrl="http://auth-api:8000/auth/token")
+oauth2_scheme = OAuth2PasswordBearer(tokenUrl="https://jobscout-auth-production.up.railway.app")
 
-SECRET_KEY = os.getenv("SECRET_KEY", "supersecretkey")
-ALGORITHM = os.getenv("ALGORITHM", "HS256")
+SECRET_KEY = os.getenv("SECRET_KEY")
+ALGORITHM = os.getenv("ALGORITHM")
 
 def get_current_user(token: str = Depends(oauth2_scheme)):
     try:

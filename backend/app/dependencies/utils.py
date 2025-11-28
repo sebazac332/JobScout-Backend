@@ -2,8 +2,8 @@ import bcrypt
 from jose import jwt
 from datetime import datetime, timedelta
 
-SECRET_KEY = "SHARED_SECRET_KEY_123"
-ALGORITHM = "HS256"
+SECRET_KEY = os.getenv("SECRET_KEY")
+ALGORITHM = os.getenv("ALGORITHM")
 ACCESS_TOKEN_EXPIRE_MINUTES = 60
 
 def hash_password(password: str) -> str:
